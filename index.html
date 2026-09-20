@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game Drama Bahasa Indonesia</title>
+  <style>
+    :root {
+      --primary: #4e54c8;
+      --secondary: #8f94fb;
+      --bg: #f4f7f6;
+      --card-bg: #ffffff;
+      --danger: #e74c3c;
+      --warning: #f39c12;
+      --success: #2ecc71;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background: var(--bg); color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 15px; }
+
+    .container {
+      width: 100%;
+      max-width: 600px;
+      background: var(--card-bg);
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      text-align: center;
+      padding: 20px;
+      user-select: none;
+    }
+
+    .header h1 {
+      font-size: 1.6rem;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .header h1:active { transform: scale(0.97); }
+    .sub-title { font-size: 0.85rem; opacity: 0.9; margin-top: 4px; }
+
+    /* Content Screens */
+    .screen { padding: 20px; display: none; }
+    .screen.active { display: block; }
+
+    /* Form Identitas */
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.9rem; }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      outline: none;
+      background-color: white;
+    }
+    .form-group input:focus, .form-group select:focus { border-color: var(--primary); }
+
+    /* Status Bar Permainan */
+    .game-status {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #eef2f5;
+      padding: 10px 15px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+
+    /* Soal Area */
+    .question-box {
+      background: #fafafa;
+      border: 1px solid #e2e2e2;
+      border-left: 5px solid var(--primary);
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 1rem;
+      line-height: 1.5;
+      min-height: 100px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    /* Pilihan Jawaban */
+    .options-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .option-btn {
+      display: flex;
+      align-items: center;
+      padding: 12px 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      background: white;
+      cursor: pointer;
+      font-size: 0.95rem;
+      text-align: left;
+      transition: all 0.2s;
+    }
+
+    .option-btn:hover { border-color: var(--secondary); background: #f8f9ff; }
+    .option-btn.selected { border-color: var(--primary); background: #eef0ff; font-weight: bold; }
+    .option-label {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #e0e0e0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 12px;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+    .option-btn.selected .option-label { background: var(--primary); color: white; }
+
+    /* Tombol Aksi Bawah */
+    .action-buttons {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn-busek { background: var(--danger); color: white; }
+    .btn-kirim { background: var(--success); color: white; }
+    .btn-start { background: var(--primary); color: white; width: 100%; margin-top: 10px; }
+
+    /* Modal Pengaturan Tersembunyi */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      z-index: 99;
+    }
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 400px;
+      width: 100%;
+    }
+    .modal-header { font-weight: bold; font-size: 1.1rem; margin-bottom: 12px; border-bottom: 1px solid #ddd; padding-bottom: 8px; }
+
+    /* Loading Spinner */
+    .loading-overlay {
+      display: none;
+      text-align: center;
+      padding: 30px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Header dengan Fitur Ketuk 5x -->
+    <div class="header">
+      <h1 id="gameTitle" onclick="handleTitleClick()">GAME DRAMA</h1>
+      <div class="sub-title">Media Pembelajaran Kuis Pilihan Ganda</div>
+    </div>
+
+    <!-- 1. HALAMAN IDENTITAS -->
+    <div id="screen-identity" class="screen active">
+      <form id="identityForm" onsubmit="event.preventDefault(); startQuiz();">
+        <div class="form-group">
+          <label for="nama">Nama Lengkap</label>
+          <input type="text" id="nama" required placeholder="Masukkan nama siswa">
+        </div>
+
+        <!-- Dropdown Kelas 7A-7I, 8A-8I, 9A-9I -->
+        <div class="form-group">
+          <label for="kelas">Kelas</label>
+          <select id="kelas" required>
+            <option value="" disabled selected>-- Pilih Kelas --</option>
+            <optgroup label="Kelas 7">
+              <option value="7A">7A</option><option value="7B">7B</option><option value="7C">7C</option>
+              <option value="7D">7D</option><option value="7E">7E</option><option value="7F">7F</option>
+              <option value="7G">7G</option><option value="7H">7H</option><option value="7I">7I</option>
+            </optgroup>
+            <optgroup label="Kelas 8">
+              <option value="8A">8A</option><option value="8B">8B</option><option value="8C">8C</option>
+              <option value="8D">8D</option><option value="8E">8E</option><option value="8F">8F</option>
+              <option value="8G">8G</option><option value="8H">8H</option><option value="8I">8I</option>
+            </optgroup>
+            <optgroup label="Kelas 9">
+              <option value="9A">9A</option><option value="9B">9B</option><option value="9C">9C</option>
+              <option value="9D">9D</option><option value="9E">9E</option><option value="9F">9F</option>
+              <option value="9G">9G</option><option value="9H">9H</option><option value="9I">9I</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <!-- Dropdown Nomor Absen 1 - 40 -->
+        <div class="form-group">
+          <label for="noAbsen">Nomor Absen</label>
+          <select id="noAbsen" required>
+            <option value="" disabled selected>-- Pilih Nomor Absen --</option>
+            <script>
+              for(let i=1; i<=40; i++) {
+                document.write(`<option value="${i}">${i}</option>`);
+              }
+            </script>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="mode">Kategori Penilaian</label>
+          <select id="mode" onchange="toggleTokenField()">
+            <option value="Formatif">Formatif (Latihan)</option>
+            <option value="Sumatif">Sumatif (Ujian)</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="tokenGroup" style="display: none;">
+          <label for="token">Token Sumatif</label>
+          <input type="text" id="token" placeholder="Masukkan token dari guru">
+        </div>
+
+        <button type="submit" class="btn btn-start">MULAI GAME</button>
+      </form>
+    </div>
+
+    <!-- LOADING SCREEN -->
+    <div id="screen-loading" class="screen loading-overlay">
+      <p>Memuat Data Soal...</p>
+    </div>
+
+    <!-- 2. HALAMAN PERMAINAN -->
+    <div id="screen-game" class="screen">
+      <!-- Status Top Bar -->
+      <div class="game-status">
+        <div>Waktu: <span id="timer">00:00</span></div>
+        <div>Nyawa: <span id="lives">❤❤❤</span></div>
+        <div>Soal: <span id="qIndex">1</span>/<span id="qTotal">10</span></div>
+      </div>
+
+      <!-- Kotak Soal -->
+      <div class="question-box" id="questionText">
+        Memuat pertanyaan...
+      </div>
+
+      <!-- Pilihan A, B, C, D -->
+      <div class="options-grid">
+        <button class="option-btn" onclick="selectOption('A')">
+          <div class="option-label">A</div>
+          <div class="option-text" id="optA">Pilihan A</div>
+        </button>
+        <button class="option-btn" onclick="selectOption('B')">
+          <div class="option-label">B</div>
+          <div class="option-text" id="optB">Pilihan B</div>
+        </button>
+        <button class="option-btn" onclick="selectOption('C')">
+          <div class="option-label">C</div>
+          <div class="option-text" id="optC">Pilihan C</div>
+        </button>
+        <button class="option-btn" onclick="selectOption('D')">
+          <div class="option-label">D</div>
+          <div class="option-text" id="optD">Pilihan D</div>
+        </button>
+      </div>
+
+      <!-- Tombol Aksi Busek & Kirim -->
+      <div class="action-buttons">
+        <button class="btn btn-busek" onclick="busekJawaban()">BUSEK</button>
+        <button class="btn btn-kirim" onclick="kirimJawaban()">KIRIM</button>
+      </div>
+    </div>
+
+    <!-- 3. HALAMAN HASIL / SELESAI -->
+    <div id="screen-result" class="screen" style="text-align: center;">
+      <h2 id="resultTitle">Permainan Selesai!</h2>
+      <p style="margin: 15px 0; font-size: 1.1rem;" id="resultStatus"></p>
+      <div style="font-size: 2.5rem; font-weight: bold; color: var(--primary); margin-bottom: 15px;" id="finalScore">0</div>
+      <p id="resultDetails" style="margin-bottom: 20px; color: #666;"></p>
+      <button class="btn btn-start" onclick="location.reload()">KEMBALI KE HALAMAN UTAMA</button>
+    </div>
+  </div>
+
+  <!-- MODAL PENGATURAN TERSEMBUNYI (Ketuk Judul 5x) -->
+  <div id="adminModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">⚙ Pengaturan Sistem (Mode Guru)</div>
+      <div id="modalBody">
+        <p>Sedang mengambil pengaturan saat ini...</p>
+      </div>
+      <button class="btn btn-start" style="margin-top: 15px;" onclick="closeModal()">TUTUP</button>
+    </div>
+  </div>
+
+  <script>
+    // URL Google Apps Script
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzuqajz1vnhq8WFb39Jr31l_M_SS7xGLWbfm7y22S5npfK8kRD6-5drBxpE3g9CrCI/exec";
+
+    // Global State
+    let clickTitleCount = 0;
+    let clickTimer = null;
+    let gameData = null;
+    let preloadedData = null; // Menyimpan data di background agar tanpa delay
+    let currentQuestionIdx = 0;
+    let selectedAnswer = null;
+    let userLives = 3;
+    let timerInterval = null;
+    let totalTimeLeft = 0;
+    let correctCount = 0;
+    let wrongCount = 0;
+    let studentData = {};
+
+    // ==========================================
+    // SISTEM SOUND EFFECTS (Web Audio API)
+    // ==========================================
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playSound(type) {
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      const now = audioCtx.currentTime;
+
+      if (type === 'click') {
+        // Suara Klik Tombol
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, now);
+        osc.frequency.exponentialRampToValueAtTime(300, now + 0.04);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.04);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.04);
+
+      } else if (type === 'ting') {
+        // Suara Benar ("Ting")
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(987.77, now); // B5
+        osc.frequency.setValueAtTime(1318.51, now + 0.08); // E6
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.35);
+
+      } else if (type === 'dedet') {
+        // Suara Salah ("Dedet")
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(160, now);
+        osc.frequency.setValueAtTime(110, now + 0.12);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.3);
+
+      } else if (type === 'gameover') {
+        // Suara Game Over
+        const notes = [280, 240, 200, 140];
+        notes.forEach((freq, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.15);
+          gain.gain.setValueAtTime(0.25, now + idx * 0.15);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.15 + 0.2);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + idx * 0.15);
+          osc.stop(now + idx * 0.15 + 0.2);
+        });
+
+      } else if (type === 'victory') {
+        // Suara Victory / Menang
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+        notes.forEach((freq, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.1);
+          gain.gain.setValueAtTime(0.3, now + idx * 0.1);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.1 + 0.3);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + idx * 0.1);
+          osc.stop(now + idx * 0.1 + 0.3);
+        });
+      }
+    }
+
+    // Bunyikan suara klik untuk setiap tombol
+    document.addEventListener('click', (e) => {
+      if (e.target.tagName === 'BUTTON' || e.target.closest('button') || e.target.id === 'gameTitle') {
+        playSound('click');
+      }
+    });
+
+    // ==========================================
+    // PRELOAD DATA DI LATAR BELAKANG (Nol Delay)
+    // ==========================================
+    window.addEventListener('DOMContentLoaded', () => {
+      fetch(SCRIPT_URL)
+        .then(res => res.json())
+        .then(data => {
+          preloadedData = data;
+          gameData = data;
+        })
+        .catch(err => console.error("Preload error:", err));
+    });
+
+    // 1. FITUR KETUK JUDUL 5X
+    function handleTitleClick() {
+      clickTitleCount++;
+      clearTimeout(clickTimer);
+      
+      if (clickTitleCount === 5) {
+        openAdminModal();
+        clickTitleCount = 0;
+      } else {
+        clickTimer = setTimeout(() => { clickTitleCount = 0; }, 2000);
+      }
+    }
+
+    function openAdminModal() {
+      document.getElementById('adminModal').style.display = 'flex';
+      if (!gameData) {
+        fetch(SCRIPT_URL)
+          .then(res => res.json())
+          .then(data => {
+            gameData = data;
+            showModalSettings();
+          })
+          .catch(err => alert("Gagal memuat pengaturan: " + err));
+      } else {
+        showModalSettings();
+      }
+    }
+
+    function showModalSettings() {
+      if (gameData && gameData.settings) {
+        let s = gameData.settings;
+        document.getElementById('modalBody').innerHTML = `
+          <ul style="list-style: none; line-height: 1.8;">
+            <li><b>Jumlah Soal:</b> ${s.jumlahSoal}</li>
+            <li><b>Waktu Permainan:</b> ${s.waktu} Detik</li>
+            <li><b>Jumlah Nyawa:</b> ${s.jumlahNyawa}</li>
+            <li><b>Token Sumatif:</b> <code>${s.tokenSumatif}</code></li>
+            <li><b>Total Soal di Bank Soal:</b> ${gameData.questions.length}</li>
+          </ul>
+        `;
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('adminModal').style.display = 'none';
+    }
+
+    function toggleTokenField() {
+      const mode = document.getElementById('mode').value;
+      document.getElementById('tokenGroup').style.display = (mode === 'Sumatif') ? 'block' : 'none';
+    }
+
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+    }
+
+    // 2. MULAI GAME (Nol Delay jika pre-loaded)
+    function startQuiz() {
+      studentData = {
+        nama: document.getElementById('nama').value.trim(),
+        kelas: document.getElementById('kelas').value,
+        noAbsen: document.getElementById('noAbsen').value,
+        mode: document.getElementById('mode').value,
+        token: document.getElementById('token').value.trim()
+      };
+
+      if (!studentData.kelas || !studentData.noAbsen) {
+        alert("Silakan pilih Kelas dan Nomor Absen!");
+        return;
+      }
+
+      // Jika data sudah siap di latar belakang, langsung jalankan tanpa delay!
+      if (preloadedData) {
+        processStartGame(preloadedData);
+      } else {
+        showScreen('screen-loading');
+        fetch(SCRIPT_URL)
+          .then(res => res.json())
+          .then(data => {
+            preloadedData = data;
+            gameData = data;
+            processStartGame(data);
+          })
+          .catch(err => {
+            alert("Gagal memuat soal dari server!");
+            showScreen('screen-identity');
+          });
+      }
+    }
+
+    function processStartGame(data) {
+      if (studentData.mode === 'Sumatif') {
+        if (studentData.token !== data.settings.tokenSumatif) {
+          alert('Token Sumatif salah!');
+          showScreen('screen-identity');
+          return;
+        }
+      }
+      initGame();
+    }
+
+    function initGame() {
+      currentQuestionIdx = 0;
+      correctCount = 0;
+      wrongCount = 0;
+      userLives = gameData.settings.jumlahNyawa || 3;
+      totalTimeLeft = gameData.settings.waktu || 300;
+
+      document.getElementById('qTotal').innerText = gameData.questions.length;
+      
+      startTimer();
+      renderQuestion();
+      showScreen('screen-game');
+    }
+
+    function startTimer() {
+      updateTimerDisplay();
+      timerInterval = setInterval(() => {
+        totalTimeLeft--;
+        updateTimerDisplay();
+        if (totalTimeLeft <= 0) {
+          clearInterval(timerInterval);
+          endGame('Waktu telah habis!', false);
+        }
+      }, 1000);
+    }
+
+    function updateTimerDisplay() {
+      let m = Math.floor(totalTimeLeft / 60);
+      let s = totalTimeLeft % 60;
+      document.getElementById('timer').innerText = 
+        `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
+    }
+
+    // Render Pertanyaan (Seketika/Instan)
+    function renderQuestion() {
+      busekJawaban();
+
+      let q = gameData.questions[currentQuestionIdx];
+      document.getElementById('qIndex').innerText = currentQuestionIdx + 1;
+      document.getElementById('questionText').innerText = q.soal;
+      document.getElementById('optA').innerText = q.a;
+      document.getElementById('optB').innerText = q.b;
+      document.getElementById('optC').innerText = q.c;
+      document.getElementById('optD').innerText = q.d;
+
+      let heartStr = '';
+      for (let i = 0; i < userLives; i++) heartStr += '❤';
+      document.getElementById('lives').innerText = heartStr || '❌';
+    }
+
+    function selectOption(opt) {
+      selectedAnswer = opt;
+      const buttons = document.querySelectorAll('.option-btn');
+      buttons.forEach((btn, idx) => {
+        btn.classList.remove('selected');
+        if ((opt === 'A' && idx === 0) ||
+            (opt === 'B' && idx === 1) ||
+            (opt === 'C' && idx === 2) ||
+            (opt === 'D' && idx === 3)) {
+          btn.classList.add('selected');
+        }
+      });
+    }
+
+    function busekJawaban() {
+      selectedAnswer = null;
+      document.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected'));
+    }
+
+    // Process Jawaban + Efek Suara
+    function kirimJawaban() {
+      if (!selectedAnswer) {
+        alert('Silakan pilih salah satu jawaban terlebih dahulu!');
+        return;
+      }
+
+      let currentQ = gameData.questions[currentQuestionIdx];
+      
+      if (selectedAnswer === currentQ.kunci) {
+        correctCount++;
+        playSound('ting'); // SUARA TING
+      } else {
+        wrongCount++;
+        userLives--;
+        playSound('dedet'); // SUARA DEDET
+      }
+
+      if (userLives <= 0) {
+        clearInterval(timerInterval);
+        endGame('Nyawa Anda telah habis!', false);
+        return;
+      }
+
+      currentQuestionIdx++;
+
+      if (currentQuestionIdx >= gameData.questions.length) {
+        clearInterval(timerInterval);
+        endGame('Selamat! Anda telah menyelesaikan seluruh soal.', true);
+      } else {
+        renderQuestion();
+      }
+    }
+
+    // 3. GAMEOVER ATAU FINISH (VICTORY)
+    function endGame(statusText, isVictory) {
+      if (isVictory && userLives > 0) {
+        playSound('victory'); // SUARA FINISH / MENANG
+        document.getElementById('resultTitle').innerText = "🎉 VICTORY! 🎉";
+      } else {
+        playSound('gameover'); // SUARA GAME OVER
+        document.getElementById('resultTitle').innerText = "💀 GAME OVER 💀";
+      }
+
+      showScreen('screen-loading');
+
+      let totalSoal = gameData.questions.length;
+      let finalScore = Math.round((correctCount / totalSoal) * 100);
+
+      document.getElementById('resultStatus').innerText = statusText;
+      document.getElementById('finalScore').innerText = finalScore;
+      document.getElementById('resultDetails').innerText = 
+        `Benar: ${correctCount} | Salah: ${wrongCount} | Sisa Nyawa: ${userLives}`;
+
+      let payload = {
+        nama: studentData.nama,
+        kelas: studentData.kelas,
+        noAbsen: studentData.noAbsen,
+        mode: studentData.mode,
+        skor: finalScore,
+        benar: correctCount,
+        salah: wrongCount
+      };
+
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(res => {
+        showScreen('screen-result');
+      })
+      .catch(err => {
+        console.error("Gagal mengirim hasil:", err);
+        showScreen('screen-result');
+      });
+    }
+  </script>
+</body>
+</html>
