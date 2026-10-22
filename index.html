@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game Drama Bahasa Indonesia - Quiz Interactive</title>
+  <style>
+    :root {
+      --primary: #4e54c8;
+      --secondary: #8f94fb;
+      --bg: #f0f2f5;
+      --card-bg: #ffffff;
+      --danger: #e74c3c;
+      --warning: #f39c12;
+      --success: #2ecc71;
+      --text: #2c3e50;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    body { background: var(--bg); color: var(--text); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 15px; }
+
+    .container {
+      width: 100%;
+      max-width: 620px;
+      background: var(--card-bg);
+      border-radius: 18px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      text-align: center;
+      padding: 22px 20px;
+      user-select: none;
+    }
+
+    .header h1 {
+      font-size: 1.65rem;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+      letter-spacing: 0.5px;
+    }
+    .header h1:active { transform: scale(0.96); }
+    .sub-title { font-size: 0.88rem; opacity: 0.92; margin-top: 5px; }
+
+    /* Content Screens */
+    .screen { padding: 22px; display: none; }
+    .screen.active { display: block; animation: fadeIn 0.25s ease-in-out; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Form Identitas */
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.9rem; color: #444; }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid #dcdfe6;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      outline: none;
+      background-color: #fff;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-group input:focus, .form-group select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(78, 84, 200, 0.15);
+    }
+
+    /* Status Bar Permainan */
+    .game-status {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f4f6fa;
+      padding: 12px 18px;
+      border-radius: 12px;
+      margin-bottom: 18px;
+      font-weight: 700;
+      font-size: 0.92rem;
+      border: 1px solid #e5e8f0;
+    }
+
+    /* Status Items */
+    .status-item { display: flex; align-items: center; gap: 6px; }
+    #lives {
+      color: var(--danger);
+      font-size: 1.25rem;
+      letter-spacing: 2px;
+    }
+
+    /* Soal Area */
+    .question-box {
+      background: #fdfdfd;
+      border: 1px solid #e1e4eb;
+      border-left: 6px solid var(--primary);
+      padding: 18px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      font-size: 1.02rem;
+      line-height: 1.55;
+      min-height: 100px;
+      max-height: 230px;
+      overflow-y: auto;
+      font-weight: 500;
+      color: #2c3e50;
+    }
+
+    /* Pilihan Jawaban */
+    .options-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+
+    .option-btn {
+      display: flex;
+      align-items: center;
+      padding: 13px 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      background: #ffffff;
+      cursor: pointer;
+      font-size: 0.96rem;
+      text-align: left;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .option-btn:hover { border-color: var(--secondary); background: #f8f9ff; }
+    .option-btn.selected {
+      border-color: var(--primary);
+      background: #eef0ff;
+      font-weight: 600;
+      box-shadow: 0 4px 10px rgba(78, 84, 200, 0.1);
+    }
+    .option-label {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 14px;
+      font-weight: 700;
+      flex-shrink: 0;
+      color: #4a5568;
+      transition: all 0.2s;
+    }
+    .option-btn.selected .option-label {
+      background: var(--primary);
+      color: white;
+    }
+    .option-text { width: 100%; word-break: break-word; }
+
+    /* Tombol Action */
+    .action-buttons { display: flex; }
+    .btn {
+      width: 100%;
+      padding: 13px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn:hover { opacity: 0.92; transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    .btn-kirim { background: var(--success); color: white; box-shadow: 0 4px 12px rgba(46, 204, 113, 0.25); }
+    .btn-start { background: var(--primary); color: white; margin-top: 10px; box-shadow: 0 4px 12px rgba(78, 84, 200, 0.25); }
+    .btn-cancel { background: #95a5a6; color: white; margin-top: 8px; }
+
+    /* Modal Pengaturan */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.55);
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      z-index: 999;
+      backdrop-filter: blur(3px);
+    }
+    .modal-content {
+      background: white;
+      padding: 24px;
+      border-radius: 14px;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    .modal-header {
+      font-weight: 700;
+      font-size: 1.15rem;
+      margin-bottom: 16px;
+      border-bottom: 2px solid #edf2f7;
+      padding-bottom: 10px;
+      color: var(--primary);
+    }
+
+    /* Loader / Badge Status */
+    .preload-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: #27ae60;
+      background: #e8f8f0;
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+
+    .loading-overlay {
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 15px;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1 id="gameTitle" onclick="handleTitleClick()" title="Ketuk 5x untuk Pengaturan Guru">GAME DRAMA</h1>
+      <div class="sub-title">Media Pembelajaran Kuis Pilihan Ganda</div>
+    </div>
+
+    <!-- 1. HALAMAN IDENTITAS -->
+    <div id="screen-identity" class="screen active">
+      <div id="preloadStatus" class="preload-badge" style="display: none;">
+        <span>✓ Data Soal Siap (Tanpa Delay)</span>
+      </div>
+
+      <form id="identityForm" onsubmit="event.preventDefault(); startQuiz();">
+        <div class="form-group">
+          <label for="nama">Nama Lengkap</label>
+          <input type="text" id="nama" required placeholder="Masukkan nama siswa">
+        </div>
+
+        <div class="form-group">
+          <label for="kelas">Kelas</label>
+          <select id="kelas" required>
+            <option value="" disabled selected>-- Pilih Kelas --</option>
+            <optgroup label="Kelas 7">
+              <option value="7A">7A</option><option value="7B">7B</option><option value="7C">7C</option>
+              <option value="7D">7D</option><option value="7E">7E</option><option value="7F">7F</option>
+              <option value="7G">7G</option><option value="7H">7H</option><option value="7I">7I</option>
+            </optgroup>
+            <optgroup label="Kelas 8">
+              <option value="8A">8A</option><option value="8B">8B</option><option value="8C">8C</option>
+              <option value="8D">8D</option><option value="8E">8E</option><option value="8F">8F</option>
+              <option value="8G">8G</option><option value="8H">8H</option><option value="8I">8I</option>
+            </optgroup>
+            <optgroup label="Kelas 9">
+              <option value="9A">9A</option><option value="9B">9B</option><option value="9C">9C</option>
+              <option value="9D">9D</option><option value="9E">9E</option><option value="9F">9F</option>
+              <option value="9G">9G</option><option value="9H">9H</option><option value="9I">9I</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="noAbsen">Nomor Absen</label>
+          <select id="noAbsen" required>
+            <option value="" disabled selected>-- Pilih Nomor Absen --</option>
+            <script>
+              for(let i=1; i<=40; i++) {
+                document.write(`<option value="${i}">${i}</option>`);
+              }
+            </script>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="mode">Kategori Penilaian</label>
+          <select id="mode" onchange="toggleTokenField()">
+            <option value="Formatif">Formatif (Latihan)</option>
+            <option value="Sumatif">Sumatif (Ujian)</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="tokenGroup" style="display: none;">
+          <label for="token">Token Sumatif</label>
+          <input type="text" id="token" placeholder="Masukkan token dari guru">
+        </div>
+
+        <button type="submit" class="btn btn-start" id="btnStart">MULAI GAME</button>
+      </form>
+    </div>
+
+    <!-- LOADING SCREEN (Hanya tampil jika preload belum selesai saat klik Mulai) -->
+    <div id="screen-loading" class="screen loading-overlay">
+      <div class="spinner"></div>
+      <p id="loadingText" style="font-weight: 600; color: #555;">Memuat Data Soal...</p>
+    </div>
+
+    <!-- 2. HALAMAN PERMAINAN -->
+    <div id="screen-game" class="screen">
+      <div class="game-status">
+        <div class="status-item">⏱ <span id="timer">00:00</span></div>
+        <div class="status-item">Nyawa: <span id="lives">❤❤❤</span></div>
+        <div class="status-item">Soal: <span id="qIndex">1</span>/<span id="qTotal">10</span></div>
+      </div>
+
+      <div class="question-box" id="questionText">
+        Memuat pertanyaan...
+      </div>
+
+      <div class="options-grid">
+        <button class="option-btn" onclick="selectOption('A')">
+          <div class="option-label">A</div>
+          <div class="option-text" id="optA">Pilihan A</div>
+        </button>
+        <button class="option-btn" onclick="selectOption('B')">
+          <div class="option-label">B</div>
+          <div class="option-text" id="optB">Pilihan B</div>
+        </button>
+        <button class="option-btn" onclick="selectOption('C')">
+          <div class="option-label">C</div>
+          <div class="option-text" id="optC">Pilihan C</div>
+        </button>
+        <button class="option-btn" onclick="selectOption('D')">
+          <div class="option-label">D</div>
+          <div class="option-text" id="optD">Pilihan D</div>
+        </button>
+      </div>
+
+      <div class="action-buttons">
+        <button class="btn btn-kirim" onclick="kirimJawaban()">KIRIM JAWABAN</button>
+      </div>
+    </div>
+
+    <!-- 3. HALAMAN HASIL -->
+    <div id="screen-result" class="screen" style="text-align: center;">
+      <h2 id="resultTitle" style="margin-bottom: 10px;">Permainan Selesai!</h2>
+      <p style="margin: 15px 0; font-size: 1.1rem;" id="resultStatus"></p>
+      <div style="font-size: 3rem; font-weight: 800; color: var(--primary); margin-bottom: 15px;" id="finalScore">0</div>
+      <p id="resultDetails" style="margin-bottom: 20px; color: #666; font-weight: 500;"></p>
+      <button class="btn btn-start" onclick="location.reload()">KEMBALI KE HALAMAN UTAMA</button>
+    </div>
+  </div>
+
+  <!-- MODAL PENGATURAN GURU -->
+  <div id="adminModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">⚙ Pengaturan Sistem (Mode Guru)</div>
+      <form id="adminForm" onsubmit="event.preventDefault(); saveAdminSettings();">
+        <div class="form-group">
+          <label>Jumlah Soal yang Ditampilkan</label>
+          <input type="number" id="admJumlahSoal" min="1" required>
+        </div>
+        <div class="form-group">
+          <label>Waktu Ujian (Detik)</label>
+          <input type="number" id="admWaktu" min="10" required>
+        </div>
+        <div class="form-group">
+          <label>Jumlah Nyawa Kesempatan</label>
+          <input type="number" id="admNyawa" min="1" max="10" required>
+        </div>
+        <div class="form-group">
+          <label>Token Ujian Sumatif</label>
+          <input type="text" id="admToken" required>
+        </div>
+        <button type="submit" class="btn btn-start" id="btnSaveAdmin">SIMPAN PENGATURAN</button>
+        <button type="button" class="btn btn-cancel" onclick="closeModal()">BATAL</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // URL Web App Google Apps Script
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxmk4PQOLmO-wjY7KyS9cxrqSwnixMuCDpdZFOrDRiLa1gVK1SVAUnBS3lPy8B2BhVZ/exec";
+
+    // Global Variables
+    let rawGameData = null;      // Direct response from Sheet
+    let activeQuestions = [];    // Shuffled questions and options
+    let clickTitleCount = 0;
+    let clickTimer = null;
+    let currentQuestionIdx = 0;
+    let selectedAnswer = null;
+    let userLives = 3;
+    let timerInterval = null;
+    let totalTimeLeft = 0;
+    let correctCount = 0;
+    let wrongCount = 0;
+    let studentData = {};
+    let isPreloading = true;
+
+    // Web Audio API Sound Effects
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playSound(type) {
+      if (audioCtx.state === 'suspended') { audioCtx.resume(); }
+      const now = audioCtx.currentTime;
+
+      if (type === 'click') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, now);
+        osc.frequency.exponentialRampToValueAtTime(300, now + 0.04);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.04);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(now); osc.stop(now + 0.04);
+
+      } else if (type === 'ting') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(987.77, now);
+        osc.frequency.setValueAtTime(1318.51, now + 0.08);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(now); osc.stop(now + 0.35);
+
+      } else if (type === 'dedet') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(160, now);
+        osc.frequency.setValueAtTime(110, now + 0.12);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(now); osc.stop(now + 0.3);
+
+      } else if (type === 'gameover') {
+        const notes = [280, 240, 200, 140];
+        notes.forEach((freq, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.15);
+          gain.gain.setValueAtTime(0.25, now + idx * 0.15);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.15 + 0.2);
+          osc.connect(gain); gain.connect(audioCtx.destination);
+          osc.start(now + idx * 0.15); osc.stop(now + idx * 0.15 + 0.2);
+        });
+
+      } else if (type === 'victory') {
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.1);
+          gain.gain.setValueAtTime(0.3, now + idx * 0.1);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.1 + 0.3);
+          osc.connect(gain); gain.connect(audioCtx.destination);
+          osc.start(now + idx * 0.1); osc.stop(now + idx * 0.1 + 0.3);
+        });
+      }
+    }
+
+    // Attach click sound
+    document.addEventListener('click', (e) => {
+      if (e.target.tagName === 'BUTTON' || e.target.closest('button') || e.target.id === 'gameTitle') {
+        playSound('click');
+      }
+    });
+
+    // SILENT PRELOAD ON PAGE LOAD (Mencegah Loading Lag saat Klik Mulai)
+    window.addEventListener('DOMContentLoaded', () => {
+      // Check local cache first
+      const cached = sessionStorage.getItem('gameDataCache');
+      if (cached) {
+        try {
+          rawGameData = JSON.parse(cached);
+          isPreloading = false;
+          document.getElementById('preloadStatus').style.display = 'inline-flex';
+        } catch(e) {}
+      }
+
+      // Background Fetch silently from Google Sheets
+      fetch(SCRIPT_URL)
+        .then(res => res.json())
+        .then(data => {
+          rawGameData = data;
+          isPreloading = false;
+          sessionStorage.setItem('gameDataCache', JSON.stringify(data));
+          document.getElementById('preloadStatus').style.display = 'inline-flex';
+        })
+        .catch(err => {
+          console.warn("Background preload error:", err);
+          isPreloading = false;
+        });
+    });
+
+    // Helper: Fisher-Yates Array Shuffler
+    function shuffleArray(array) {
+      let arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    // Prepare & Shuffle Questions AND Options dynamically
+    function prepareQuestionsAndOptions(rawQuestions, limitCount) {
+      if (!rawQuestions || rawQuestions.length === 0) return [];
+
+      // 1. Acak urutan Soal
+      let shuffledSoal = shuffleArray(rawQuestions);
+
+      // Batasi jumlah soal sesuai pengaturan
+      if (limitCount && limitCount > 0 && limitCount < shuffledSoal.length) {
+        shuffledSoal = shuffledSoal.slice(0, limitCount);
+      }
+
+      // 2. Acak Pilihan Jawaban di setiap Soal + Petakan Kunci Jawaban dengan Tepat
+      return shuffledSoal.map(item => {
+        let originalOptions = [
+          { originalKey: 'A', text: item.a },
+          { originalKey: 'B', text: item.b },
+          { originalKey: 'C', text: item.c },
+          { originalKey: 'D', text: item.d }
+        ];
+
+        // Acak pilihan jawaban
+        let randomizedOptions = shuffleArray(originalOptions);
+
+        let labels = ['A', 'B', 'C', 'D'];
+        let mappedOptions = {};
+        let newCorrectKey = 'A';
+
+        randomizedOptions.forEach((opt, idx) => {
+          let currentLabel = labels[idx];
+          mappedOptions[currentLabel] = opt.text;
+          
+          // Jika pilihan ini merupakan kunci jawaban asli, catat label barunya!
+          if (opt.originalKey.trim().toUpperCase() === item.kunci.trim().toUpperCase()) {
+            newCorrectKey = currentLabel;
+          }
+        });
+
+        return {
+          soal: item.soal,
+          options: mappedOptions, // { A: "text1", B: "text2", C: "text3", D: "text4" }
+          correctKey: newCorrectKey
+        };
+      });
+    }
+
+    // Modal Admin / Guru Trigger (Ketuk Judul 5x)
+    function handleTitleClick() {
+      clickTitleCount++;
+      clearTimeout(clickTimer);
+      if (clickTitleCount === 5) {
+        openAdminModal();
+        clickTitleCount = 0;
+      } else {
+        clickTimer = setTimeout(() => { clickTitleCount = 0; }, 2000);
+      }
+    }
+
+    function openAdminModal() {
+      document.getElementById('adminModal').style.display = 'flex';
+      if (!rawGameData) {
+        fetch(SCRIPT_URL)
+          .then(res => res.json())
+          .then(data => { rawGameData = data; showModalSettings(); });
+      } else {
+        showModalSettings();
+      }
+    }
+
+    function showModalSettings() {
+      if (rawGameData && rawGameData.settings) {
+        let s = rawGameData.settings;
+        document.getElementById('admJumlahSoal').value = s.jumlahSoal || 10;
+        document.getElementById('admWaktu').value = s.waktu || 300;
+        document.getElementById('admNyawa').value = s.jumlahNyawa || 3;
+        document.getElementById('admToken').value = s.tokenSumatif || "DRAMA2026";
+      }
+    }
+
+    function saveAdminSettings() {
+      const btn = document.getElementById('btnSaveAdmin');
+      btn.innerText = "Menyimpan...";
+      btn.disabled = true;
+
+      const newSettings = {
+        jumlahSoal: parseInt(document.getElementById('admJumlahSoal').value),
+        waktu: parseInt(document.getElementById('admWaktu').value),
+        jumlahNyawa: parseInt(document.getElementById('admNyawa').value),
+        tokenSumatif: document.getElementById('admToken').value.trim()
+      };
+
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'saveSettings', settings: newSettings })
+      })
+      .then(res => res.json())
+      .then(res => {
+        btn.innerText = "SIMPAN PENGATURAN";
+        btn.disabled = false;
+        if (res.success) {
+          alert("Pengaturan berhasil disimpan ke Google Sheets!");
+          if (rawGameData) rawGameData.settings = newSettings;
+          sessionStorage.removeItem('gameDataCache'); // clear cache
+          closeModal();
+        } else {
+          alert("Gagal menyimpan pengaturan.");
+        }
+      })
+      .catch(err => {
+        btn.innerText = "SIMPAN PENGATURAN";
+        btn.disabled = false;
+        alert("Error: " + err);
+      });
+    }
+
+    function closeModal() {
+      document.getElementById('adminModal').style.display = 'none';
+    }
+
+    function toggleTokenField() {
+      const mode = document.getElementById('mode').value;
+      document.getElementById('tokenGroup').style.display = (mode === 'Sumatif') ? 'block' : 'none';
+    }
+
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+    }
+
+    // Start Quiz Execution
+    function startQuiz() {
+      studentData = {
+        nama: document.getElementById('nama').value.trim(),
+        kelas: document.getElementById('kelas').value,
+        noAbsen: document.getElementById('noAbsen').value,
+        mode: document.getElementById('mode').value,
+        token: document.getElementById('token').value.trim()
+      };
+
+      if (!studentData.nama || !studentData.kelas || !studentData.noAbsen) {
+        alert("Silakan lengkapi seluruh data identitas!");
+        return;
+      }
+
+      // Jika data sudah ter-preload, langsung jalankan tanpa delay!
+      if (rawGameData) {
+        processStartGame(rawGameData);
+      } else {
+        // Hanya jika internet lambat & data belum selesai di-fetch
+        showScreen('screen-loading');
+        document.getElementById('loadingText').innerText = "Sedang mengambil data dari Google Drive...";
+        fetch(SCRIPT_URL)
+          .then(res => res.json())
+          .then(data => {
+            rawGameData = data;
+            processStartGame(data);
+          })
+          .catch(err => {
+            alert("Gagal terhubung ke Google Drive. Periksa koneksi internet Anda.");
+            showScreen('screen-identity');
+          });
+      }
+    }
+
+    function processStartGame(data) {
+      if (studentData.mode === 'Sumatif') {
+        if (studentData.token !== data.settings.tokenSumatif) {
+          alert('Token Ujian Sumatif tidak sesuai!');
+          showScreen('screen-identity');
+          return;
+        }
+      }
+      initGame();
+    }
+
+    function initGame() {
+      currentQuestionIdx = 0;
+      correctCount = 0;
+      wrongCount = 0;
+
+      // Ambil pengaturan
+      let settings = rawGameData.settings || { jumlahSoal: 10, waktu: 300, jumlahNyawa: 3 };
+      userLives = settings.jumlahNyawa || 3;
+      totalTimeLeft = settings.waktu || 300;
+
+      // PROSES ACAK SOAL DAN ACAK PILIHAN JAWABAN
+      activeQuestions = prepareQuestionsAndOptions(rawGameData.questions, settings.jumlahSoal);
+
+      if (activeQuestions.length === 0) {
+        alert("Soal tidak ditemukan dalam Google Sheets!");
+        showScreen('screen-identity');
+        return;
+      }
+
+      document.getElementById('qTotal').innerText = activeQuestions.length;
+      startTimer();
+      renderQuestion();
+      showScreen('screen-game');
+    }
+
+    function startTimer() {
+      updateTimerDisplay();
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        totalTimeLeft--;
+        updateTimerDisplay();
+        if (totalTimeLeft <= 0) {
+          clearInterval(timerInterval);
+          endGame('Waktu pengerjaan telah habis!', false);
+        }
+      }, 1000);
+    }
+
+    function updateTimerDisplay() {
+      let m = Math.floor(totalTimeLeft / 60);
+      let s = totalTimeLeft % 60;
+      document.getElementById('timer').innerText = `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
+    }
+
+    function renderQuestion() {
+      selectedAnswer = null;
+      document.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected'));
+
+      let q = activeQuestions[currentQuestionIdx];
+      document.getElementById('qIndex').innerText = currentQuestionIdx + 1;
+      document.getElementById('questionText').innerText = q.soal;
+      document.getElementById('optA').innerText = q.options.A || '';
+      document.getElementById('optB').innerText = q.options.B || '';
+      document.getElementById('optC').innerText = q.options.C || '';
+      document.getElementById('optD').innerText = q.options.D || '';
+
+      // Tampilkan Nyawa
+      let heartStr = '';
+      for (let i = 0; i < userLives; i++) heartStr += '❤';
+      document.getElementById('lives').innerText = heartStr || '❌';
+    }
+
+    function selectOption(opt) {
+      selectedAnswer = opt;
+      const buttons = document.querySelectorAll('.option-btn');
+      buttons.forEach((btn, idx) => {
+        btn.classList.remove('selected');
+        if ((opt === 'A' && idx === 0) || (opt === 'B' && idx === 1) ||
+            (opt === 'C' && idx === 2) || (opt === 'D' && idx === 3)) {
+          btn.classList.add('selected');
+        }
+      });
+    }
+
+    function kirimJawaban() {
+      if (!selectedAnswer) {
+        alert('Silakan pilih salah satu jawaban terlebih dahulu!');
+        return;
+      }
+
+      let currentQ = activeQuestions[currentQuestionIdx];
+      
+      // Evaluasi jawaban yang diacak
+      if (selectedAnswer === currentQ.correctKey) {
+        correctCount++;
+        playSound('ting');
+      } else {
+        wrongCount++;
+        userLives--;
+        playSound('dedet');
+      }
+
+      if (userLives <= 0) {
+        clearInterval(timerInterval);
+        endGame('Nyawa Anda telah habis!', false);
+        return;
+      }
+
+      currentQuestionIdx++;
+
+      if (currentQuestionIdx >= activeQuestions.length) {
+        clearInterval(timerInterval);
+        endGame('Selamat! Anda telah menyelesaikan seluruh soal.', true);
+      } else {
+        renderQuestion();
+      }
+    }
+
+    // Selesai Game & Kirim Nilai ke Google Sheets
+    function endGame(statusText, isVictory) {
+      let gameStatus = (isVictory && userLives > 0) ? 'Finish' : 'Game Over';
+
+      if (gameStatus === 'Finish') {
+        playSound('victory');
+        document.getElementById('resultTitle').innerText = "🎉 VICTORY! 🎉";
+      } else {
+        playSound('gameover');
+        document.getElementById('resultTitle').innerText = "💀 GAME OVER 💀";
+      }
+
+      let totalSoal = activeQuestions.length;
+      let finalScore = Math.round((correctCount / totalSoal) * 100);
+
+      document.getElementById('resultStatus').innerText = statusText;
+      document.getElementById('finalScore').innerText = finalScore;
+      document.getElementById('resultDetails').innerText = `Benar: ${correctCount} | Salah: ${wrongCount} | Status: ${gameStatus}`;
+
+      showScreen('screen-result');
+
+      // Kirim hasil pengerjaan secara async ke Google Sheets
+      let payload = {
+        action: 'submitResult',
+        nama: studentData.nama,
+        kelas: studentData.kelas,
+        noAbsen: studentData.noAbsen,
+        mode: studentData.mode,
+        skor: finalScore,
+        status: gameStatus
+      };
+
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      }).catch(err => console.warn("Submit result warning:", err));
+    }
+  </script>
+</body>
+</html>
